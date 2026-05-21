@@ -495,7 +495,7 @@ export default function ProductorEjecutivo() {
       {/* ── SELECCIÓN ───────────────────────────────────────────── */}
       {phase === "select" && (
         <div style={{ textAlign:"center", width:"100%", maxWidth:680, padding:"0 8px" }}>
-          <div style={{ fontSize:"clamp(8px,2vw,11px)", letterSpacing:6, color:"#444", marginBottom:4 }}>ELIGE TU JUGADOR</div>
+          <div style={{ fontSize:"clamp(8px,2vw,11px)", letterSpacing:6, color:"#ffffff", marginBottom:4 }}>ELIGE TU JUGADOR</div>
           <div style={{ fontSize:"clamp(16px,5vw,24px)", fontWeight:900, letterSpacing:5, color:"#fff", marginBottom:20 }}>¿QUIÉN ERES HOY?</div>
 
           <div style={{ display:"flex", gap:"clamp(8px,2vw,20px)", justifyContent:"center", flexWrap:"wrap", marginBottom:20 }}>
@@ -518,7 +518,7 @@ export default function ProductorEjecutivo() {
                     <PixelPreview grid={a.pixel} color={a.color} size={3} selected={isSel} />
                   </div>
                   <div style={{ color:a.color, fontWeight:900, fontSize:"clamp(11px,3vw,14px)", letterSpacing:2, marginBottom:2 }}>{a.nombre}</div>
-                  <div style={{ color:"#555", fontSize:"clamp(8px,2vw,10px)", letterSpacing:1, marginBottom:10 }}>{a.rol}</div>
+                  <div style={{ color:"#ffffff", fontSize:"clamp(8px,2vw,10px)", letterSpacing:1, marginBottom:10 }}>{a.rol}</div>
                   <div style={{ background:`${a.color}22`, border:`1px solid ${a.color}44`, borderRadius:4, padding:"5px 8px", fontSize:"clamp(8px,2vw,10px)", color:a.color, letterSpacing:1 }}>
                     ⚡ {a.bonus}
                   </div>
@@ -535,7 +535,7 @@ export default function ProductorEjecutivo() {
                 <div key={o.type} style={{ fontSize:"clamp(7px,2vw,9px)", color:"#ffffff" }}>
                   <span style={{ marginRight:4 }}>{o.emoji}</span>
                   <span style={{ color:o.color }}>{o.label.length>22?o.label.slice(0,20)+"…":o.label}</span>
-                  <span style={{ color:"#aaaaaa", marginLeft:4 }}>-{o.pointsDmg}pts</span>
+                  <span style={{ color:"#ffffff", marginLeft:4 }}>-{o.pointsDmg}pts</span>
                 </div>
               ))}
             </div>
@@ -565,7 +565,7 @@ export default function ProductorEjecutivo() {
               </div>
               <div style={{ flex:1, margin:"0 clamp(8px,2vw,20px)" }}>
                 <div style={{ display:"flex", justifyContent:"space-between", marginBottom:3 }}>
-                  <span style={{ color:"#333", fontSize:"clamp(7px,2vw,9px)", letterSpacing:2 }}>DEADLINE</span>
+                  <span style={{ color:"#ffffff", fontSize:"clamp(7px,2vw,9px)", letterSpacing:2 }}>DEADLINE</span>
                   <span style={{ color:dlColor, fontSize:"clamp(7px,2vw,9px)", fontWeight:700 }}>{Math.round(deadline)}%</span>
                 </div>
                 <div style={{ background:"#0d0820", borderRadius:3, height:6, border:`1px solid ${dlColor}33` }}>
@@ -573,7 +573,7 @@ export default function ProductorEjecutivo() {
                 </div>
               </div>
               <div style={{ textAlign:"right", minWidth:60 }}>
-                <div style={{ color:"#333", fontSize:"clamp(7px,2vw,9px)", letterSpacing:2 }}>PUNTOS</div>
+                <div style={{ color:"#ffffff", fontSize:"clamp(7px,2vw,9px)", letterSpacing:2 }}>PUNTOS</div>
                 <div style={{ color:"#fff", fontSize:"clamp(14px,4vw,20px)", fontWeight:700 }}>{score.toLocaleString()}</div>
               </div>
               {combo >= 3 && (
@@ -605,22 +605,22 @@ export default function ProductorEjecutivo() {
               <div style={{ color:"#FF4444", fontSize:"clamp(14px,4vw,18px)", fontWeight:900, letterSpacing:5, marginBottom:4, textShadow:"0 0 16px #FF4444" }}>
                 CAMPAÑA FALLIDA
               </div>
-              <div style={{ color:"#aaa", fontSize:"clamp(8px,2vw,10px)", letterSpacing:2, marginBottom:20, textAlign:"center", padding:"0 16px" }}>
+              <div style={{ color:"#ffffff", fontSize:"clamp(8px,2vw,10px)", letterSpacing:2, marginBottom:20, textAlign:"center", padding:"0 16px" }}>
                 DEADLINE INCUMPLIDO — EL CLIENTE NO ESTÁ CONTENTO
               </div>
               <div style={{ display:"flex", gap:"clamp(20px,6vw,40px)", marginBottom:20 }}>
                 <div style={{ textAlign:"center" }}>
-                  <div style={{ color:"#aaa", fontSize:"clamp(7px,2vw,9px)", letterSpacing:2 }}>PUNTUACIÓN</div>
+                  <div style={{ color:"#ffffff", fontSize:"clamp(7px,2vw,9px)", letterSpacing:2 }}>PUNTUACIÓN</div>
                   <div style={{ color:"#fff", fontSize:"clamp(20px,6vw,28px)", fontWeight:900 }}>{score.toLocaleString()}</div>
                 </div>
                 <div style={{ textAlign:"center" }}>
-                  <div style={{ color:"#aaa", fontSize:"clamp(7px,2vw,9px)", letterSpacing:2 }}>RÉCORD</div>
+                  <div style={{ color:"#ffffff", fontSize:"clamp(7px,2vw,9px)", letterSpacing:2 }}>RÉCORD</div>
                   <div style={{ color:"#FFD700", fontSize:"clamp(20px,6vw,28px)", fontWeight:900 }}>{best.toLocaleString()}</div>
                 </div>
               </div>
               {collected.length > 0 && (
                 <div style={{ marginBottom:16, textAlign:"center" }}>
-                  <div style={{ color:"#aaa", fontSize:"clamp(7px,2vw,9px)", letterSpacing:2, marginBottom:6 }}>ASSETS RECOLECTADOS</div>
+                  <div style={{ color:"#ffffff", fontSize:"clamp(7px,2vw,9px)", letterSpacing:2, marginBottom:6 }}>ASSETS RECOLECTADOS</div>
                   <div style={{ display:"flex", gap:6, flexWrap:"wrap", justifyContent:"center", maxWidth:280, padding:"0 16px" }}>
                     {collected.map((c,i)=>{
                       const item=COLLECTIBLES.find(x=>x.type===c&&!x.trap);
@@ -662,7 +662,7 @@ export default function ProductorEjecutivo() {
               >
                 ▲ SALTAR
               </button>
-              <div style={{ color:"#333", fontSize:"clamp(7px,2vw,9px)", letterSpacing:3, textAlign:"center" }}>
+              <div style={{ color:"#ffffff", fontSize:"clamp(7px,2vw,9px)", letterSpacing:3, textAlign:"center" }}>
                 ESPACIO / TAP PARA SALTAR · ⚠️ BRIEF PARPADEANTE = TRAMPA
               </div>
             </div>
