@@ -155,6 +155,7 @@ export default function ProductorEjecutivo() {
   const canvasRef = useRef();
   const stateRef = useRef({});
   const containerRef = useRef();
+  const vpSentinelRef = useRef();
 
   // ── RESPONSIVE SCALE ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -162,52 +163,23 @@ export default function ProductorEjecutivo() {
     const reserved = isTouch ? 140 : 80;
 
     const applyScale = (vw, vh) => {
+      if (!vw || !vh) return;
       const sx = (vw - 8) / GAME_W;
       const sy = (vh - reserved) / GAME_H;
       setScale(Math.min(sx, sy, 1));
       setIsPortraitMobile(isTouch && vh > vw);
     };
 
-    // ResizeObserver gives the actual post-layout dimensions in entry.contentRect,
-    // bypassing stale window.innerWidth/visualViewport values during rotation.
+    // Observe a position:fixed sentinel — its contentRect always equals the
+    // real viewport (not document) dimensions, even during rotation on iOS Safari.
     const ro = new ResizeObserver((entries) => {
       for (const entry of entries) {
         applyScale(entry.contentRect.width, entry.contentRect.height);
       }
     });
-    ro.observe(document.documentElement);
+    if (vpSentinelRef.current) ro.observe(vpSentinelRef.current);
 
-    // visualViewport resize fires after iOS Safari finishes updating layout
-    const onVV = () => applyScale(window.visualViewport.width, window.visualViewport.height);
-    window.visualViewport?.addEventListener("resize", onVV);
-
-    // orientationchange: poll until dimensions actually change
-    let pollTimer;
-    const onOrient = () => {
-      let attempts = 0;
-      const poll = () => {
-        applyScale(
-          window.visualViewport?.width  ?? document.documentElement.clientWidth,
-          window.visualViewport?.height ?? document.documentElement.clientHeight,
-        );
-        if (++attempts < 10) pollTimer = setTimeout(poll, 100);
-      };
-      poll();
-    };
-    window.addEventListener("orientationchange", onOrient);
-
-    // Initial calc
-    applyScale(
-      document.documentElement.clientWidth,
-      document.documentElement.clientHeight,
-    );
-
-    return () => {
-      ro.disconnect();
-      window.visualViewport?.removeEventListener("resize", onVV);
-      window.removeEventListener("orientationchange", onOrient);
-      clearTimeout(pollTimer);
-    };
+    return () => ro.disconnect();
   }, []);
 
   // ── INIT STATE ────────────────────────────────────────────────────────────
@@ -508,6 +480,8 @@ export default function ProductorEjecutivo() {
 
   return (
     <div style={S.root}>
+      {/* Viewport sentinel: position:fixed so its contentRect always equals the real viewport */}
+      <div ref={vpSentinelRef} style={{ position:"fixed", top:0, left:0, width:"100%", height:"100%", pointerEvents:"none", visibility:"hidden" }} />
 
       {/* ── INICIO ──────────────────────────────────────────────── */}
       {phase === "start" && (
