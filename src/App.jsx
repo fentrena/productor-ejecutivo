@@ -168,12 +168,14 @@ export default function ProductorEjecutivo() {
       const isTouch = window.matchMedia("(pointer: coarse)").matches;
       setIsPortraitMobile(isTouch && vh > vw);
     };
+    // orientationchange fires before the browser updates dimensions, so delay
+    const onOrient = () => { setTimeout(calc, 50); setTimeout(calc, 250); };
     calc();
     window.addEventListener("resize", calc);
-    window.addEventListener("orientationchange", calc);
+    window.addEventListener("orientationchange", onOrient);
     return () => {
       window.removeEventListener("resize", calc);
-      window.removeEventListener("orientationchange", calc);
+      window.removeEventListener("orientationchange", onOrient);
     };
   }, []);
 
@@ -589,49 +591,50 @@ export default function ProductorEjecutivo() {
               onClick={jump}
               onTouchStart={(e) => { e.preventDefault(); jump(); }}
             />
+          </div>
 
-            {/* Game over overlay */}
-            {phase === "dead" && (
-              <div style={{
-                position:"absolute", inset:0,
-                display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
-                background:"rgba(4,4,15,0.93)", backdropFilter:"blur(3px)",
-              }}>
-                <div style={{ fontSize:"clamp(28px,8vw,40px)", marginBottom:6 }}>💀</div>
-                <div style={{ color:"#FF4444", fontSize:"clamp(14px,4vw,18px)", fontWeight:900, letterSpacing:5, marginBottom:4, textShadow:"0 0 16px #FF4444" }}>
-                  CAMPAÑA FALLIDA
+          {/* Game over overlay — fixed so it covers the full screen on any orientation */}
+          {phase === "dead" && (
+            <div style={{
+              position:"fixed", inset:0,
+              display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
+              background:"rgba(4,4,15,0.96)", backdropFilter:"blur(3px)",
+              zIndex:100, overflowY:"auto", padding:"16px",
+            }}>
+              <div style={{ fontSize:"clamp(28px,8vw,40px)", marginBottom:6 }}>💀</div>
+              <div style={{ color:"#FF4444", fontSize:"clamp(14px,4vw,18px)", fontWeight:900, letterSpacing:5, marginBottom:4, textShadow:"0 0 16px #FF4444" }}>
+                CAMPAÑA FALLIDA
+              </div>
+              <div style={{ color:"#aaa", fontSize:"clamp(8px,2vw,10px)", letterSpacing:2, marginBottom:20, textAlign:"center", padding:"0 16px" }}>
+                DEADLINE INCUMPLIDO — EL CLIENTE NO ESTÁ CONTENTO
+              </div>
+              <div style={{ display:"flex", gap:"clamp(20px,6vw,40px)", marginBottom:20 }}>
+                <div style={{ textAlign:"center" }}>
+                  <div style={{ color:"#aaa", fontSize:"clamp(7px,2vw,9px)", letterSpacing:2 }}>PUNTUACIÓN</div>
+                  <div style={{ color:"#fff", fontSize:"clamp(20px,6vw,28px)", fontWeight:900 }}>{score.toLocaleString()}</div>
                 </div>
-                <div style={{ color:"#333", fontSize:"clamp(8px,2vw,10px)", letterSpacing:2, marginBottom:20, textAlign:"center", padding:"0 16px" }}>
-                  DEADLINE INCUMPLIDO — EL CLIENTE NO ESTÁ CONTENTO
-                </div>
-                <div style={{ display:"flex", gap:"clamp(20px,6vw,40px)", marginBottom:20 }}>
-                  <div style={{ textAlign:"center" }}>
-                    <div style={{ color:"#333", fontSize:"clamp(7px,2vw,9px)", letterSpacing:2 }}>PUNTUACIÓN</div>
-                    <div style={{ color:"#fff", fontSize:"clamp(20px,6vw,28px)", fontWeight:900 }}>{score.toLocaleString()}</div>
-                  </div>
-                  <div style={{ textAlign:"center" }}>
-                    <div style={{ color:"#333", fontSize:"clamp(7px,2vw,9px)", letterSpacing:2 }}>RÉCORD</div>
-                    <div style={{ color:"#FFD700", fontSize:"clamp(20px,6vw,28px)", fontWeight:900 }}>{best.toLocaleString()}</div>
-                  </div>
-                </div>
-                {collected.length > 0 && (
-                  <div style={{ marginBottom:16, textAlign:"center" }}>
-                    <div style={{ color:"#222", fontSize:"clamp(7px,2vw,9px)", letterSpacing:2, marginBottom:6 }}>ASSETS RECOLECTADOS</div>
-                    <div style={{ display:"flex", gap:6, flexWrap:"wrap", justifyContent:"center", maxWidth:280, padding:"0 16px" }}>
-                      {collected.map((c,i)=>{
-                        const item=COLLECTIBLES.find(x=>x.type===c&&!x.trap);
-                        return item?<span key={i} style={{fontSize:"clamp(14px,4vw,18px)"}}>{item.emoji}</span>:null;
-                      })}
-                    </div>
-                  </div>
-                )}
-                <div style={{ display:"flex", gap:10, flexWrap:"wrap", justifyContent:"center", padding:"0 16px" }}>
-                  <button onClick={() => setPhase("select")} style={S.btnGhost}>CAMBIAR PERSONAJE</button>
-                  <button onClick={startGame} style={S.btn(av?.color||"#00FF9C")}>REINTENTAR</button>
+                <div style={{ textAlign:"center" }}>
+                  <div style={{ color:"#aaa", fontSize:"clamp(7px,2vw,9px)", letterSpacing:2 }}>RÉCORD</div>
+                  <div style={{ color:"#FFD700", fontSize:"clamp(20px,6vw,28px)", fontWeight:900 }}>{best.toLocaleString()}</div>
                 </div>
               </div>
-            )}
-          </div>
+              {collected.length > 0 && (
+                <div style={{ marginBottom:16, textAlign:"center" }}>
+                  <div style={{ color:"#aaa", fontSize:"clamp(7px,2vw,9px)", letterSpacing:2, marginBottom:6 }}>ASSETS RECOLECTADOS</div>
+                  <div style={{ display:"flex", gap:6, flexWrap:"wrap", justifyContent:"center", maxWidth:280, padding:"0 16px" }}>
+                    {collected.map((c,i)=>{
+                      const item=COLLECTIBLES.find(x=>x.type===c&&!x.trap);
+                      return item?<span key={i} style={{fontSize:"clamp(14px,4vw,18px)"}}>{item.emoji}</span>:null;
+                    })}
+                  </div>
+                </div>
+              )}
+              <div style={{ display:"flex", gap:10, flexWrap:"wrap", justifyContent:"center", padding:"0 16px" }}>
+                <button onClick={() => setPhase("select")} style={S.btnGhost}>CAMBIAR PERSONAJE</button>
+                <button onClick={startGame} style={S.btn(av?.color||"#00FF9C")}>REINTENTAR</button>
+              </div>
+            </div>
+          )}
 
           {phase === "playing" && (
             <div style={{ marginTop:8, display:"flex", flexDirection:"column", alignItems:"center", gap:10, width:"100%" }}>
