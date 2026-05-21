@@ -159,23 +159,24 @@ export default function ProductorEjecutivo() {
   // ── RESPONSIVE SCALE ──────────────────────────────────────────────────────
   useEffect(() => {
     const calc = () => {
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      // On mobile keep some padding, on desktop cap at 1
-      const sx = (vw - 8) / GAME_W;
-      const sy = (vh - 120) / GAME_H; // leave room for HUD
-      setScale(Math.min(sx, sy, 1));
+      // visualViewport is the only reliable source on iOS Safari after rotation
+      const vw = (window.visualViewport?.width  ?? window.innerWidth);
+      const vh = (window.visualViewport?.height ?? window.innerHeight);
       const isTouch = window.matchMedia("(pointer: coarse)").matches;
+      // Leave room for HUD (~40px) + SALTAR button (~80px) on touch
+      const reserved = isTouch ? 140 : 80;
+      const sx = (vw - 8) / GAME_W;
+      const sy = (vh - reserved) / GAME_H;
+      setScale(Math.min(sx, sy, 1));
       setIsPortraitMobile(isTouch && vh > vw);
     };
-    // orientationchange fires before the browser updates dimensions, so delay
-    const onOrient = () => { setTimeout(calc, 50); setTimeout(calc, 250); };
     calc();
+    window.visualViewport?.addEventListener("resize", calc);
     window.addEventListener("resize", calc);
-    window.addEventListener("orientationchange", onOrient);
+    window.addEventListener("orientationchange", () => { setTimeout(calc, 100); setTimeout(calc, 400); });
     return () => {
+      window.visualViewport?.removeEventListener("resize", calc);
       window.removeEventListener("resize", calc);
-      window.removeEventListener("orientationchange", onOrient);
     };
   }, []);
 
@@ -458,7 +459,7 @@ export default function ProductorEjecutivo() {
       alignItems:"center", justifyContent:"center",
       fontFamily:"'Courier New', monospace",
       userSelect:"none", WebkitUserSelect:"none",
-      padding:"8px", overflow:"hidden",
+      padding:"8px", overflowX:"hidden", overflowY:"auto",
     },
     title: { fontSize:"clamp(24px,6vw,44px)", fontWeight:900, letterSpacing:"clamp(4px,2vw,8px)", color:"#00FF9C", textShadow:"0 0 30px #00FF9C,0 0 60px #00FF9C44", lineHeight:1, marginBottom:4 },
     sub: { fontSize:"clamp(9px,2.5vw,12px)", color:"#ffffff", letterSpacing:3, marginBottom:6 },
@@ -469,7 +470,7 @@ export default function ProductorEjecutivo() {
       cursor:"pointer", fontFamily:"monospace", boxShadow:`0 0 24px ${color}55`,
     }),
     btnGhost: {
-      background:"transparent", color:"#444", border:"1px solid #222",
+      background:"transparent", color:"#ffffff", border:"1px solid #555",
       padding:"clamp(8px,2vw,12px) clamp(16px,4vw,28px)",
       fontSize:"clamp(9px,2.5vw,11px)", letterSpacing:3, cursor:"pointer", fontFamily:"monospace",
     },
