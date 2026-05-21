@@ -150,7 +150,6 @@ export default function ProductorEjecutivo() {
   const [combo, setCombo] = useState(0);
   const [collected, setCollected] = useState([]);
   const [scale, setScale] = useState(1);
-  const [isPortraitMobile, setIsPortraitMobile] = useState(false);
 
   const canvasRef = useRef();
   const stateRef = useRef({});
@@ -167,7 +166,6 @@ export default function ProductorEjecutivo() {
       const sx = (vw - 8) / GAME_W;
       const sy = (vh - reserved) / GAME_H;
       setScale(Math.min(sx, sy, 1));
-      setIsPortraitMobile(isTouch && vh > vw);
     };
 
     // Observe a position:fixed sentinel — its contentRect always equals the
@@ -675,32 +673,8 @@ export default function ProductorEjecutivo() {
         </div>
       )}
 
-      {/* Portrait orientation hint */}
-      {isPortraitMobile && (phase === "playing" || phase === "dead") && (
-        <div style={{
-          position: "fixed", bottom: 0, left: 0, right: 0,
-          background: "#0d0820ee",
-          borderTop: "1px solid #C77DFF44",
-          padding: "10px 16px",
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-          zIndex: 999,
-          backdropFilter: "blur(4px)",
-        }}>
-          <span style={{ fontSize: 22, display: "inline-block", animation: "rotateHint 2s ease-in-out infinite" }}>📱</span>
-          <span style={{ color: "#C77DFF", fontSize: "clamp(9px,3vw,12px)", letterSpacing: 2, fontFamily: "monospace" }}>
-            ROTÁ EL TELÉFONO PARA MEJOR EXPERIENCIA
-          </span>
-        </div>
-      )}
-
       <style>{`
         @media (pointer: coarse) { .saltar-btn { display: block !important; } }
-        @keyframes rotateHint {
-          0%   { transform: rotate(0deg); }
-          30%  { transform: rotate(90deg); }
-          60%  { transform: rotate(90deg); }
-          100% { transform: rotate(0deg); }
-        }
       `}</style>
     </div>
   );
