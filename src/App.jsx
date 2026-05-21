@@ -150,6 +150,7 @@ export default function ProductorEjecutivo() {
   const [combo, setCombo] = useState(0);
   const [collected, setCollected] = useState([]);
   const [scale, setScale] = useState(1);
+  const [isPortraitMobile, setIsPortraitMobile] = useState(false);
 
   const canvasRef = useRef();
   const stateRef = useRef({});
@@ -164,10 +165,16 @@ export default function ProductorEjecutivo() {
       const sx = (vw - 8) / GAME_W;
       const sy = (vh - 120) / GAME_H; // leave room for HUD
       setScale(Math.min(sx, sy, 1));
+      const isTouch = window.matchMedia("(pointer: coarse)").matches;
+      setIsPortraitMobile(isTouch && vh > vw);
     };
     calc();
     window.addEventListener("resize", calc);
-    return () => window.removeEventListener("resize", calc);
+    window.addEventListener("orientationchange", calc);
+    return () => {
+      window.removeEventListener("resize", calc);
+      window.removeEventListener("orientationchange", calc);
+    };
   }, []);
 
   // ── INIT STATE ────────────────────────────────────────────────────────────
@@ -627,12 +634,66 @@ export default function ProductorEjecutivo() {
           </div>
 
           {phase === "playing" && (
-            <div style={{ marginTop:8, color:"#1a1a2e", fontSize:"clamp(7px,2vw,9px)", letterSpacing:3, textAlign:"center" }}>
-              ESPACIO / TAP PARA SALTAR · ⚠️ BRIEF PARPADEANTE = TRAMPA
+            <div style={{ marginTop:8, display:"flex", flexDirection:"column", alignItems:"center", gap:10, width:"100%" }}>
+              {/* SALTAR button — shown on touch devices */}
+              <button
+                onTouchStart={(e) => { e.preventDefault(); jump(); }}
+                onClick={jump}
+                style={{
+                  display: "none",
+                  background: av?.color || "#00FF9C",
+                  color: "#000",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "18px 56px",
+                  fontSize: 18,
+                  fontWeight: 900,
+                  letterSpacing: 4,
+                  fontFamily: "monospace",
+                  cursor: "pointer",
+                  boxShadow: `0 0 24px ${av?.color || "#00FF9C"}66`,
+                  WebkitTapHighlightColor: "transparent",
+                  touchAction: "manipulation",
+                }}
+                className="saltar-btn"
+              >
+                ▲ SALTAR
+              </button>
+              <div style={{ color:"#333", fontSize:"clamp(7px,2vw,9px)", letterSpacing:3, textAlign:"center" }}>
+                ESPACIO / TAP PARA SALTAR · ⚠️ BRIEF PARPADEANTE = TRAMPA
+              </div>
             </div>
           )}
         </div>
       )}
+
+      {/* Portrait orientation hint */}
+      {isPortraitMobile && (phase === "playing" || phase === "dead") && (
+        <div style={{
+          position: "fixed", bottom: 0, left: 0, right: 0,
+          background: "#0d0820ee",
+          borderTop: "1px solid #C77DFF44",
+          padding: "10px 16px",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+          zIndex: 999,
+          backdropFilter: "blur(4px)",
+        }}>
+          <span style={{ fontSize: 22, display: "inline-block", animation: "rotateHint 2s ease-in-out infinite" }}>📱</span>
+          <span style={{ color: "#C77DFF", fontSize: "clamp(9px,3vw,12px)", letterSpacing: 2, fontFamily: "monospace" }}>
+            ROTÁ EL TELÉFONO PARA MEJOR EXPERIENCIA
+          </span>
+        </div>
+      )}
+
+      <style>{`
+        @media (pointer: coarse) { .saltar-btn { display: block !important; } }
+        @keyframes rotateHint {
+          0%   { transform: rotate(0deg); }
+          30%  { transform: rotate(90deg); }
+          60%  { transform: rotate(90deg); }
+          100% { transform: rotate(0deg); }
+        }
+      `}</style>
     </div>
   );
 }
