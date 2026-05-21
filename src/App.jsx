@@ -452,7 +452,7 @@ export default function ProductorEjecutivo() {
       padding:"8px", overflow:"hidden",
     },
     title: { fontSize:"clamp(24px,6vw,44px)", fontWeight:900, letterSpacing:"clamp(4px,2vw,8px)", color:"#00FF9C", textShadow:"0 0 30px #00FF9C,0 0 60px #00FF9C44", lineHeight:1, marginBottom:4 },
-    sub: { fontSize:"clamp(9px,2.5vw,12px)", color:"#444", letterSpacing:3, marginBottom:6 },
+    sub: { fontSize:"clamp(9px,2.5vw,12px)", color:"#ffffff", letterSpacing:3, marginBottom:6 },
     btn: (color="#00FF9C") => ({
       background:color, color:color==="#00FF9C"?"#000":color==="#fff"?"#000":"#000",
       border:"none", padding:"clamp(10px,3vw,16px) clamp(20px,6vw,56px)",
@@ -472,10 +472,10 @@ export default function ProductorEjecutivo() {
       {/* ── INICIO ──────────────────────────────────────────────── */}
       {phase === "start" && (
         <div style={{ textAlign:"center", maxWidth:560, width:"100%", padding:"0 12px" }}>
-          <div style={{ fontSize:"clamp(8px,2vw,11px)", letterSpacing:6, color:"#333", marginBottom:8 }}>WAGMI MEDIA AGENCY PRESENTA</div>
+          <div style={{ fontSize:"clamp(8px,2vw,11px)", letterSpacing:6, color:"#ffffff", marginBottom:8 }}>WAGMI MEDIA AGENCY PRESENTA</div>
           <div style={S.title}>PRODUCTOR<br/>EJECUTIVO</div>
           <div style={S.sub}>RECOGE RECURSOS · ESQUIVA EL CAOS · ENTREGA LA CAMPAÑA</div>
-          <div style={{ fontSize:"clamp(9px,2.5vw,11px)", color:"#2a2a2a", marginBottom:32, letterSpacing:1 }}>
+          <div style={{ fontSize:"clamp(9px,2.5vw,11px)", color:"#ffffff", marginBottom:32, letterSpacing:1 }}>
             ⚠️ Cuidado con los Brief falsos — son trampa
           </div>
           <button onClick={() => setPhase("select")} style={S.btn()}>INICIAR</button>
