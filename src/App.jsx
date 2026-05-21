@@ -69,9 +69,9 @@ const JONATHAN_PIXEL = [
 ];
 
 const AVATARS = [
-  { id:"martins", nombre:"La Martins", rol:"Directora Creativa", color:"#C77DFF", pixel:MARTINS_PIXEL, bonus:"✍️ Copy vale 2x", stat:{footage:1,copy:2,approval:1,budget:1,brief:1}, emoji:"💜" },
-  { id:"leonzi",  nombre:"Leonzi",     rol:"Estratega & Dev",    color:"#00FF9C", pixel:LEONZI_PIXEL,  bonus:"💰 Budget vale 2x", stat:{footage:1,copy:1,approval:1,budget:2,brief:1}, emoji:"💚" },
-  { id:"jonathan",nombre:"Jonathan",   rol:"Productor Creativo", color:"#FFD700", pixel:JONATHAN_PIXEL,bonus:"🎬 Footage vale 2x", stat:{footage:2,copy:1,approval:1,budget:1,brief:1}, emoji:"💛" },
+  { id:"martins", nombre:"La Martins", rol:"Caos Organizacional", color:"#C77DFF", pixel:MARTINS_PIXEL, bonus:"✍️ Copy vale 2x", stat:{footage:1,copy:2,approval:1,budget:1,brief:1}, emoji:"💜" },
+  { id:"leonzi",  nombre:"Leonzi",     rol:"Easy Going",          color:"#00FF9C", pixel:LEONZI_PIXEL,  bonus:"💰 Budget vale 2x", stat:{footage:1,copy:1,approval:1,budget:2,brief:1}, emoji:"💚" },
+  { id:"jonathan",nombre:"Jonathan",   rol:"El Profe",            color:"#FFD700", pixel:JONATHAN_PIXEL,bonus:"🎬 Footage vale 2x", stat:{footage:2,copy:1,approval:1,budget:1,brief:1}, emoji:"💛" },
 ];
 
 // ── COLECCIONABLES ─────────────────────────────────────────────────────────────
@@ -520,13 +520,13 @@ export default function ProductorEjecutivo() {
 
           {/* Leyenda obstáculos */}
           <div style={{ marginBottom:20, padding:"12px 16px", background:"#080614", border:"1px solid #1a1a2e", borderRadius:6, maxWidth:520, margin:"0 auto 20px" }}>
-            <div style={{ color:"#2a2a2a", fontSize:"clamp(7px,2vw,9px)", letterSpacing:3, marginBottom:8 }}>OBSTÁCULOS — DRENAN DEADLINE Y RESTAN PUNTOS</div>
+            <div style={{ color:"#ffffff", fontSize:"clamp(7px,2vw,9px)", letterSpacing:3, marginBottom:8 }}>OBSTÁCULOS — DRENAN DEADLINE Y RESTAN PUNTOS</div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"5px 12px", textAlign:"left" }}>
               {OBSTACLES.map(o=>(
-                <div key={o.type} style={{ fontSize:"clamp(7px,2vw,9px)", color:"#333" }}>
+                <div key={o.type} style={{ fontSize:"clamp(7px,2vw,9px)", color:"#ffffff" }}>
                   <span style={{ marginRight:4 }}>{o.emoji}</span>
                   <span style={{ color:o.color }}>{o.label.length>22?o.label.slice(0,20)+"…":o.label}</span>
-                  <span style={{ color:"#222", marginLeft:4 }}>-{o.pointsDmg}pts</span>
+                  <span style={{ color:"#aaaaaa", marginLeft:4 }}>-{o.pointsDmg}pts</span>
                 </div>
               ))}
             </div>
