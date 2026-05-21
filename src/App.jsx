@@ -159,9 +159,8 @@ export default function ProductorEjecutivo() {
   // ── RESPONSIVE SCALE ──────────────────────────────────────────────────────
   useEffect(() => {
     const calc = () => {
-      // visualViewport is the only reliable source on iOS Safari after rotation
-      const vw = (window.visualViewport?.width  ?? window.innerWidth);
-      const vh = (window.visualViewport?.height ?? window.innerHeight);
+      const vw = window.visualViewport?.width  ?? document.documentElement.clientWidth  ?? window.innerWidth;
+      const vh = window.visualViewport?.height ?? document.documentElement.clientHeight ?? window.innerHeight;
       const isTouch = window.matchMedia("(pointer: coarse)").matches;
       // Leave room for HUD (~40px) + SALTAR button (~80px) on touch
       const reserved = isTouch ? 140 : 80;
@@ -171,10 +170,14 @@ export default function ProductorEjecutivo() {
       setIsPortraitMobile(isTouch && vh > vw);
     };
     calc();
+    // ResizeObserver fires reliably on rotation across browsers
+    const ro = new ResizeObserver(calc);
+    ro.observe(document.documentElement);
     window.visualViewport?.addEventListener("resize", calc);
     window.addEventListener("resize", calc);
-    window.addEventListener("orientationchange", () => { setTimeout(calc, 100); setTimeout(calc, 400); });
+    window.addEventListener("orientationchange", () => { calc(); setTimeout(calc, 150); setTimeout(calc, 500); });
     return () => {
+      ro.disconnect();
       window.visualViewport?.removeEventListener("resize", calc);
       window.removeEventListener("resize", calc);
     };

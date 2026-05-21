@@ -10,14 +10,16 @@
     <title>Productor Ejecutivo — WAGMI Media Agency</title>
     <style>
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-      html, body { 
-        background: #04040f; 
-        overflow: hidden; 
-        height: 100%; 
+      html, body {
+        background: #04040f;
+        overflow-x: hidden;
+        overflow-y: auto;
+        min-height: 100%;
         width: 100%;
-        touch-action: none;
+        touch-action: pan-y;
+        -webkit-text-size-adjust: 100%;
       }
-      #root { height: 100%; width: 100%; }
+      #root { min-height: 100%; width: 100%; }
     </style>
   </head>
   <body>
