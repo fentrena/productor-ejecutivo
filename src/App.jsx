@@ -158,28 +158,55 @@ export default function ProductorEjecutivo() {
 
   // ── RESPONSIVE SCALE ──────────────────────────────────────────────────────
   useEffect(() => {
-    const calc = () => {
-      const vw = window.visualViewport?.width  ?? document.documentElement.clientWidth  ?? window.innerWidth;
-      const vh = window.visualViewport?.height ?? document.documentElement.clientHeight ?? window.innerHeight;
-      const isTouch = window.matchMedia("(pointer: coarse)").matches;
-      // Leave room for HUD (~40px) + SALTAR button (~80px) on touch
-      const reserved = isTouch ? 140 : 80;
+    const isTouch = window.matchMedia("(pointer: coarse)").matches;
+    const reserved = isTouch ? 140 : 80;
+
+    const applyScale = (vw, vh) => {
       const sx = (vw - 8) / GAME_W;
       const sy = (vh - reserved) / GAME_H;
       setScale(Math.min(sx, sy, 1));
       setIsPortraitMobile(isTouch && vh > vw);
     };
-    calc();
-    // ResizeObserver fires reliably on rotation across browsers
-    const ro = new ResizeObserver(calc);
+
+    // ResizeObserver gives the actual post-layout dimensions in entry.contentRect,
+    // bypassing stale window.innerWidth/visualViewport values during rotation.
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        applyScale(entry.contentRect.width, entry.contentRect.height);
+      }
+    });
     ro.observe(document.documentElement);
-    window.visualViewport?.addEventListener("resize", calc);
-    window.addEventListener("resize", calc);
-    window.addEventListener("orientationchange", () => { calc(); setTimeout(calc, 150); setTimeout(calc, 500); });
+
+    // visualViewport resize fires after iOS Safari finishes updating layout
+    const onVV = () => applyScale(window.visualViewport.width, window.visualViewport.height);
+    window.visualViewport?.addEventListener("resize", onVV);
+
+    // orientationchange: poll until dimensions actually change
+    let pollTimer;
+    const onOrient = () => {
+      let attempts = 0;
+      const poll = () => {
+        applyScale(
+          window.visualViewport?.width  ?? document.documentElement.clientWidth,
+          window.visualViewport?.height ?? document.documentElement.clientHeight,
+        );
+        if (++attempts < 10) pollTimer = setTimeout(poll, 100);
+      };
+      poll();
+    };
+    window.addEventListener("orientationchange", onOrient);
+
+    // Initial calc
+    applyScale(
+      document.documentElement.clientWidth,
+      document.documentElement.clientHeight,
+    );
+
     return () => {
       ro.disconnect();
-      window.visualViewport?.removeEventListener("resize", calc);
-      window.removeEventListener("resize", calc);
+      window.visualViewport?.removeEventListener("resize", onVV);
+      window.removeEventListener("orientationchange", onOrient);
+      clearTimeout(pollTimer);
     };
   }, []);
 
