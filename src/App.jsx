@@ -69,9 +69,9 @@ const JONATHAN_PIXEL = [
 ];
 
 const AVATARS = [
-  { id:"martins", nombre:"La Martins", rol:"Caos Organizacional", color:"#C77DFF", pixel:MARTINS_PIXEL, bonus:"✍️ Copy vale 2x", stat:{footage:1,copy:2,approval:1,budget:1,brief:1}, emoji:"💜" },
-  { id:"leonzi",  nombre:"Leonzi",     rol:"Easy Going",          color:"#00FF9C", pixel:LEONZI_PIXEL,  bonus:"💰 Budget vale 2x", stat:{footage:1,copy:1,approval:1,budget:2,brief:1}, emoji:"💚" },
-  { id:"jonathan",nombre:"Jonathan",   rol:"El Profe",            color:"#FFD700", pixel:JONATHAN_PIXEL,bonus:"🎬 Footage vale 2x", stat:{footage:2,copy:1,approval:1,budget:1,brief:1}, emoji:"💛" },
+  { id:"martins", nombre:"La Martins", rol:"Por mi que se joda",          color:"#C77DFF", pixel:MARTINS_PIXEL, bonus:"✍️ Copy vale 2x", stat:{footage:1,copy:2,approval:1,budget:1,brief:1}, emoji:"💜" },
+  { id:"leonzi",  nombre:"Leonzi",     rol:"Yo no tengo peo",             color:"#00FF9C", pixel:LEONZI_PIXEL,  bonus:"💰 Budget vale 2x", stat:{footage:1,copy:1,approval:1,budget:2,brief:1}, emoji:"💚" },
+  { id:"jonathan",nombre:"Jonathan",   rol:"Venezuela, lo estamos logrando", color:"#FFD700", pixel:JONATHAN_PIXEL,bonus:"🎬 Footage vale 2x", stat:{footage:2,copy:1,approval:1,budget:1,brief:1}, emoji:"💛" },
 ];
 
 // ── COLECCIONABLES ─────────────────────────────────────────────────────────────
