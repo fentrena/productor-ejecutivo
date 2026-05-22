@@ -3,31 +3,54 @@ import { useState, useEffect, useRef, useCallback } from "react";
 // ── AUDIO ─────────────────────────────────────────────────────────────────────
 let _actx = null;
 let _muted = false;
+let _unlocked = false;
+
 const _ctx = () => {
   if (!_actx) _actx = new (window.AudioContext || window.webkitAudioContext)();
   return _actx;
 };
+
+// iOS Safari requires playing a real (silent) buffer inside a user gesture to
+// truly unlock the AudioContext. resume() alone is not enough.
+const _silentUnlock = (ctx) => {
+  const buf = ctx.createBuffer(1, 1, ctx.sampleRate);
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.connect(ctx.destination);
+  src.start(0);
+};
+
 const _tone = (type, f0, f1, dur, vol = 0.15) => {
-  if (_muted) return;
+  if (_muted || !_unlocked) return;
   try {
     const ctx = _ctx();
-    if (ctx.state === "suspended") return;
-    const now = ctx.currentTime;
+    // +0.04s offset: gives the context time to start after the unlock gesture
+    const t = ctx.currentTime + 0.04;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = type;
-    osc.frequency.setValueAtTime(f0, now);
-    if (f1 !== f0) osc.frequency.linearRampToValueAtTime(f1, now + dur);
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(vol, now + 0.005);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+    osc.frequency.setValueAtTime(f0, t);
+    if (f1 !== f0) osc.frequency.linearRampToValueAtTime(f1, t + dur);
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(vol, t + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
     osc.connect(gain); gain.connect(ctx.destination);
-    osc.start(now); osc.stop(now + dur);
+    osc.start(t); osc.stop(t + dur + 0.05);
   } catch (_) {}
 };
+
 const _seq = (notes) => notes.forEach(n => setTimeout(() => _tone(n.t, n.f0, n.f1 ?? n.f0, n.d, n.v ?? 0.15), n.delay * 1000));
+
 const sfx = {
-  unlock:   () => { try { const c = _ctx(); if (c.state === "suspended") c.resume(); } catch(_) {} },
+  unlock: () => {
+    if (_unlocked) return;
+    _unlocked = true; // set synchronously so _tone() calls in same gesture work
+    try {
+      const ctx = _ctx();
+      _silentUnlock(ctx);
+      ctx.resume().catch(() => {});
+    } catch (_) {}
+  },
   jump:     () => _tone("square",   280, 520,  0.08, 0.12),
   collect:  () => _tone("sine",     523, 1046, 0.10, 0.15),
   hit:      () => _tone("sawtooth", 160, 60,   0.18, 0.20),
