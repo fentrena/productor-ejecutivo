@@ -1,5 +1,50 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
+// ── AUDIO ─────────────────────────────────────────────────────────────────────
+let _actx = null;
+let _muted = false;
+const _ctx = () => {
+  if (!_actx) _actx = new (window.AudioContext || window.webkitAudioContext)();
+  return _actx;
+};
+const _tone = (type, f0, f1, dur, vol = 0.15) => {
+  if (_muted) return;
+  try {
+    const ctx = _ctx();
+    if (ctx.state === "suspended") return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(f0, now);
+    if (f1 !== f0) osc.frequency.linearRampToValueAtTime(f1, now + dur);
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(vol, now + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(now); osc.stop(now + dur);
+  } catch (_) {}
+};
+const _seq = (notes) => notes.forEach(n => setTimeout(() => _tone(n.t, n.f0, n.f1 ?? n.f0, n.d, n.v ?? 0.15), n.delay * 1000));
+const sfx = {
+  unlock:   () => { try { const c = _ctx(); if (c.state === "suspended") c.resume(); } catch(_) {} },
+  jump:     () => _tone("square",   280, 520,  0.08, 0.12),
+  collect:  () => _tone("sine",     523, 1046, 0.10, 0.15),
+  hit:      () => _tone("sawtooth", 160, 60,   0.18, 0.20),
+  combo:    () => _seq([
+    { t:"sine", f0:330, d:0.08, v:0.13, delay:0    },
+    { t:"sine", f0:392, d:0.08, v:0.13, delay:0.09 },
+    { t:"sine", f0:494, d:0.10, v:0.16, delay:0.18 },
+  ]),
+  gameOver: () => _seq([
+    { t:"square", f0:392, d:0.12, v:0.18, delay:0    },
+    { t:"square", f0:330, d:0.12, v:0.18, delay:0.14 },
+    { t:"square", f0:262, d:0.12, v:0.18, delay:0.28 },
+    { t:"square", f0:196, d:0.30, v:0.22, delay:0.42 },
+  ]),
+  setMuted: (v) => { _muted = v; },
+};
+
 // ── CONSTANTES BASE ────────────────────────────────────────────────────────────
 const GAME_W = 800;
 const GAME_H = 400;
@@ -150,6 +195,7 @@ export default function ProductorEjecutivo() {
   const [combo, setCombo] = useState(0);
   const [collected, setCollected] = useState([]);
   const [scale, setScale] = useState(1);
+  const [muted, setMuted] = useState(false);
 
   const canvasRef = useRef();
   const stateRef = useRef({});
@@ -193,9 +239,10 @@ export default function ProductorEjecutivo() {
 
   // ── INPUT ─────────────────────────────────────────────────────────────────
   const jump = useCallback(() => {
+    sfx.unlock();
     if (phase !== "playing") return;
     const p = stateRef.current.player;
-    if (p && p.grounded) { p.vy = JUMP_FORCE; p.grounded = false; }
+    if (p && p.grounded) { sfx.jump(); p.vy = JUMP_FORCE; p.grounded = false; }
   }, [phase]);
 
   useEffect(() => {
@@ -260,6 +307,7 @@ export default function ProductorEjecutivo() {
 
     // Collisions
     const endGame = () => {
+      sfx.gameOver();
       const ns = Math.round(s.score);
       const newBest = Math.max(parseInt(localStorage.getItem("pe_best")||"0"), ns);
       localStorage.setItem("pe_best", newBest);
@@ -271,6 +319,7 @@ export default function ProductorEjecutivo() {
       if (!hit) return true;
       if (o.kind === "collectible") {
         if (o.trap) {
+          sfx.hit();
           s.score = Math.max(0, s.score + o.points);
           s.deadline = Math.max(0, s.deadline - 10);
           s.combo = 0; s.flashTimer = 12;
@@ -278,6 +327,8 @@ export default function ProductorEjecutivo() {
           if (s.deadline <= 0) endGame();
         } else {
           s.combo++;
+          sfx.collect();
+          if (s.combo % 3 === 0) sfx.combo();
           const mult = av.stat[o.type] || 1;
           const pts = Math.round(o.points * mult * Math.max(1, Math.floor(s.combo/3)));
           s.score += pts;
@@ -288,6 +339,7 @@ export default function ProductorEjecutivo() {
         return false;
       }
       if (o.kind === "obstacle") {
+        sfx.hit();
         if (o.comboReset) s.combo = 0;
         s.score = Math.max(0, s.score - (o.pointsDmg||0));
         s.deadline = Math.max(0, s.deadline - (o.deadlineDmg||20));
@@ -490,7 +542,7 @@ export default function ProductorEjecutivo() {
           <div style={{ fontSize:"clamp(9px,2.5vw,11px)", color:"#ffffff", marginBottom:32, letterSpacing:1 }}>
             ⚠️ Cuidado con los Brief falsos — son trampa
           </div>
-          <button onClick={() => setPhase("select")} style={S.btn()}>INICIAR</button>
+          <button onClick={() => { sfx.unlock(); setPhase("select"); }} style={S.btn()}>INICIAR</button>
           {best > 0 && <div style={{ color:"#FFD700", fontSize:"clamp(9px,2.5vw,11px)", marginTop:18, letterSpacing:2 }}>RÉCORD: {best.toLocaleString()}</div>}
         </div>
       )}
@@ -584,6 +636,11 @@ export default function ProductorEjecutivo() {
                   x{combo}
                 </div>
               )}
+              <button
+                onClick={() => { const v = !muted; setMuted(v); sfx.setMuted(v); }}
+                style={{ marginLeft:8, background:"transparent", border:"none", cursor:"pointer", fontSize:"clamp(14px,3vw,18px)", lineHeight:1, padding:"2px 4px", opacity:0.7 }}
+                title={muted ? "Activar sonido" : "Silenciar"}
+              >{muted ? "🔇" : "🔊"}</button>
             </div>
           )}
 
@@ -592,7 +649,7 @@ export default function ProductorEjecutivo() {
             <canvas ref={canvasRef} width={GAME_W} height={GAME_H}
               style={canvasStyle}
               onClick={jump}
-              onTouchStart={(e) => { e.preventDefault(); jump(); }}
+              onTouchStart={(e) => { e.preventDefault(); sfx.unlock(); jump(); }}
             />
           </div>
 
