@@ -68,6 +68,31 @@ const sfx = {
   setMuted: (v) => { _muted = v; },
 };
 
+// ── LEADERBOARD / SUPABASE ───────────────────────────────────────────────────
+const SB_URL = "https://uwjiixanjndlbbbuttgx.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3amlpeGFuam5kbGJiYnV0dGd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3MTU5MDksImV4cCI6MjA2NTI5MTkwOX0.FQGbP7Uj-CPUiKknqoUgdGExQbVpYRrpDpNILI0FuwY";
+const SB_H = { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}`, "Content-Type": "application/json" };
+
+const submitScore = async (name, score, avatar) => {
+  if (!name || score <= 0) return;
+  try {
+    await fetch(`${SB_URL}/rest/v1/pe_scores`, {
+      method: "POST", headers: { ...SB_H, "Prefer": "return=minimal" },
+      body: JSON.stringify({ name, score, avatar }),
+    });
+  } catch (_) {}
+};
+
+const fetchLeaderboard = async () => {
+  try {
+    const res = await fetch(
+      `${SB_URL}/rest/v1/pe_top_scores?order=score.desc&limit=10&select=name,score,avatar`,
+      { headers: SB_H }
+    );
+    return res.ok ? res.json() : [];
+  } catch (_) { return []; }
+};
+
 // ── CONSTANTES BASE ────────────────────────────────────────────────────────────
 const GAME_W = 800;
 const GAME_H = 400;
@@ -219,11 +244,17 @@ export default function ProductorEjecutivo() {
   const [collected, setCollected] = useState([]);
   const [scale, setScale] = useState(1);
   const [muted, setMuted] = useState(false);
+  const [playerName, setPlayerName] = useState(() => localStorage.getItem("pe_player") || "");
+  const [nameInput, setNameInput] = useState("");
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [lbLoading, setLbLoading] = useState(false);
 
   const canvasRef = useRef();
   const stateRef = useRef({});
   const containerRef = useRef();
   const vpSentinelRef = useRef();
+  const playerNameRef = useRef(localStorage.getItem("pe_player") || "");
+  useEffect(() => { playerNameRef.current = playerName; }, [playerName]);
 
   // ── RESPONSIVE SCALE ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -335,6 +366,10 @@ export default function ProductorEjecutivo() {
       const newBest = Math.max(parseInt(localStorage.getItem("pe_best")||"0"), ns);
       localStorage.setItem("pe_best", newBest);
       setScore(ns); setBest(newBest); setPhase("dead");
+      submitScore(playerNameRef.current, ns, s.avatar.id);
+      setLbLoading(true);
+      setLeaderboard([]);
+      fetchLeaderboard().then(data => { setLeaderboard(data || []); setLbLoading(false); });
     };
 
     s.objects = s.objects.filter(o => {
@@ -562,10 +597,35 @@ export default function ProductorEjecutivo() {
           <div style={{ fontSize:"clamp(8px,2vw,11px)", letterSpacing:6, color:"#ffffff", marginBottom:8 }}>WAGMI MEDIA AGENCY PRESENTA</div>
           <div style={S.title}>PRODUCTOR<br/>EJECUTIVO</div>
           <div style={S.sub}>RECOGE RECURSOS · ESQUIVA EL CAOS · ENTREGA LA CAMPAÑA</div>
-          <div style={{ fontSize:"clamp(9px,2.5vw,11px)", color:"#ffffff", marginBottom:32, letterSpacing:1 }}>
+          <div style={{ fontSize:"clamp(9px,2.5vw,11px)", color:"#ffffff", marginBottom:24, letterSpacing:1 }}>
             ⚠️ Cuidado con los Brief falsos — son trampa
           </div>
-          <button onClick={() => { sfx.unlock(); setPhase("select"); }} style={S.btn()}>INICIAR</button>
+          {!playerName ? (
+            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:12 }}>
+              <div style={{ color:"#00FF9C", fontSize:"clamp(9px,2.5vw,12px)", letterSpacing:3 }}>¿CÓMO TE LLAMAS?</div>
+              <input
+                value={nameInput}
+                onChange={e => setNameInput(e.target.value.slice(0, 20))}
+                onKeyDown={e => { if (e.key === "Enter" && nameInput.trim()) { const n = nameInput.trim(); localStorage.setItem("pe_player", n); setPlayerName(n); sfx.unlock(); setPhase("select"); } }}
+                placeholder="tu nombre"
+                maxLength={20}
+                style={{ background:"#0d0820", border:"1px solid #00FF9C55", color:"#fff", fontFamily:"monospace", fontSize:"clamp(12px,3vw,16px)", letterSpacing:2, padding:"10px 16px", outline:"none", textAlign:"center", width:"clamp(180px,60vw,260px)", borderRadius:4 }}
+                autoFocus
+              />
+              <button
+                onClick={() => { const n = nameInput.trim(); if (!n) return; localStorage.setItem("pe_player", n); setPlayerName(n); sfx.unlock(); setPhase("select"); }}
+                style={S.btn()}
+              >ENTRAR</button>
+            </div>
+          ) : (
+            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:10 }}>
+              <div style={{ color:"#888", fontSize:"clamp(8px,2vw,10px)", letterSpacing:2 }}>
+                JUGANDO COMO <span style={{ color:"#00FF9C" }}>{playerName.toUpperCase()}</span>
+                <button onClick={() => { setPlayerName(""); localStorage.removeItem("pe_player"); }} style={{ background:"none", border:"none", color:"#555", fontSize:"clamp(8px,2vw,10px)", cursor:"pointer", marginLeft:8, fontFamily:"monospace" }}>cambiar</button>
+              </div>
+              <button onClick={() => { sfx.unlock(); setPhase("select"); }} style={S.btn()}>INICIAR</button>
+            </div>
+          )}
           {best > 0 && <div style={{ color:"#FFD700", fontSize:"clamp(9px,2.5vw,11px)", marginTop:18, letterSpacing:2 }}>RÉCORD: {best.toLocaleString()}</div>}
         </div>
       )}
@@ -712,6 +772,31 @@ export default function ProductorEjecutivo() {
                   </div>
                 </div>
               )}
+              {/* Leaderboard */}
+              <div style={{ width:"100%", maxWidth:340, marginBottom:16, textAlign:"center" }}>
+                <div style={{ color:"#ffffff", fontSize:"clamp(7px,2vw,9px)", letterSpacing:3, marginBottom:8 }}>🏆 TOP JUGADORES</div>
+                {lbLoading ? (
+                  <div style={{ color:"#555", fontSize:"clamp(8px,2vw,10px)", letterSpacing:2 }}>cargando...</div>
+                ) : leaderboard.length === 0 ? (
+                  <div style={{ color:"#555", fontSize:"clamp(8px,2vw,10px)" }}>sin conexión</div>
+                ) : (
+                  <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+                    {leaderboard.map((row, i) => {
+                      const isMe = row.name.toLowerCase() === playerName.toLowerCase();
+                      const rowAv = AVATARS.find(a => a.id === row.avatar);
+                      return (
+                        <div key={i} style={{ display:"flex", alignItems:"center", gap:8, padding:"4px 10px", borderRadius:4, background: isMe ? `${rowAv?.color || "#00FF9C"}22` : "transparent", border: isMe ? `1px solid ${rowAv?.color || "#00FF9C"}66` : "1px solid transparent" }}>
+                          <span style={{ color:"#555", fontSize:"clamp(7px,2vw,9px)", minWidth:16 }}>#{i+1}</span>
+                          <span style={{ fontSize:"clamp(9px,2.5vw,11px)" }}>{rowAv?.emoji || "👤"}</span>
+                          <span style={{ color: isMe ? (rowAv?.color || "#00FF9C") : "#ccc", fontSize:"clamp(9px,2.5vw,11px)", flex:1, textAlign:"left", letterSpacing:1 }}>{row.name}</span>
+                          <span style={{ color:"#fff", fontSize:"clamp(9px,2.5vw,11px)", fontWeight:700, letterSpacing:1 }}>{row.score.toLocaleString()}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
               <div style={{ display:"flex", gap:10, flexWrap:"wrap", justifyContent:"center", padding:"0 16px" }}>
                 <button onClick={() => setPhase("select")} style={S.btnGhost}>CAMBIAR PERSONAJE</button>
                 <button onClick={startGame} style={S.btn(av?.color||"#00FF9C")}>REINTENTAR</button>
