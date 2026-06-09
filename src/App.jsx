@@ -41,6 +41,39 @@ const _tone = (type, f0, f1, dur, vol = 0.15) => {
 
 const _seq = (notes) => notes.forEach(n => setTimeout(() => _tone(n.t, n.f0, n.f1 ?? n.f0, n.d, n.v ?? 0.15), n.delay * 1000));
 
+// ── MUSIC ─────────────────────────────────────────────────────────────────────
+let _musicTimerId = null;
+let _musicStep = 0;
+// [melodyHz, bassHz] pairs — 0 = rest. A-minor chiptune loop at 150 BPM (8th notes)
+const _MUS = [
+  [330,110],[0,0],[262,110],[0,0],
+  [294,131],[0,0],[330,131],[0,0],
+  [220,110],[0,0],[247,98], [0,0],
+  [262,110],[0,0],[220,110],[0,0],
+];
+const _MUS_MS = 200;
+const _musNote = (freq, wave, vol, dur) => {
+  if (!freq) return;
+  try {
+    const ctx = _ctx(); const t = ctx.currentTime;
+    const osc = ctx.createOscillator(); const g = ctx.createGain();
+    osc.type = wave; osc.frequency.value = freq;
+    g.gain.setValueAtTime(vol, t); g.gain.setValueAtTime(0, t + dur);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(t); osc.stop(t + dur + 0.01);
+  } catch(_) {}
+};
+const _musStep = () => {
+  if (_unlocked && !_muted) {
+    const [mel, bas] = _MUS[_musicStep % _MUS.length];
+    const d = _MUS_MS / 1000 * 0.78;
+    _musNote(mel, "triangle", 0.06, d);
+    _musNote(bas, "square",   0.03, d);
+  }
+  _musicStep++;
+  _musicTimerId = setTimeout(_musStep, _MUS_MS);
+};
+
 const sfx = {
   unlock: () => {
     if (_unlocked) return;
@@ -66,6 +99,14 @@ const sfx = {
     { t:"square", f0:196, d:0.30, v:0.22, delay:0.42 },
   ]),
   setMuted: (v) => { _muted = v; },
+  startMusic: () => {
+    if (_musicTimerId !== null) return;
+    _musicStep = 0;
+    _musStep();
+  },
+  stopMusic: () => {
+    if (_musicTimerId !== null) { clearTimeout(_musicTimerId); _musicTimerId = null; }
+  },
 };
 
 // ── LEADERBOARD / SUPABASE ───────────────────────────────────────────────────
@@ -283,7 +324,7 @@ export default function ProductorEjecutivo() {
   // ── INIT STATE ────────────────────────────────────────────────────────────
   const initState = useCallback((avatar) => {
     stateRef.current = {
-      player: { x:110, y:GROUND_Y, vy:0, grounded:true, frame:0, frameTimer:0 },
+      player: { x:110, y:GROUND_Y, vy:0, grounded:true, frame:0, frameTimer:0, jumpsLeft:1 },
       objects:[], bg:[{x:0},{x:GAME_W}], bgMid:[{x:0},{x:GAME_W}],
       speed:BASE_SPEED, spawnTimer:50, deadlineTimer:0,
       distanceTick:0, combo:0, score:0, deadline:100,
@@ -297,7 +338,20 @@ export default function ProductorEjecutivo() {
     sfx.unlock();
     if (phase !== "playing") return;
     const p = stateRef.current.player;
-    if (p && p.grounded) { sfx.jump(); p.vy = JUMP_FORCE; p.grounded = false; }
+    if (!p) return;
+    if (p.grounded) {
+      sfx.jump();
+      p.vy = JUMP_FORCE; p.grounded = false; p.jumpsLeft = 1;
+    } else if (p.jumpsLeft > 0) {
+      sfx.jump();
+      p.vy = JUMP_FORCE * 0.88; p.jumpsLeft = 0;
+      const s = stateRef.current;
+      for (let i = 0; i < 8; i++) {
+        const a = Math.PI * 0.5 + (Math.random() - 0.5) * 1.2;
+        const spd = 1.5 + Math.random() * 2;
+        s.particles.push({ x:p.x, y:p.y, vx:Math.cos(a)*spd, vy:Math.sin(a)*spd, color:s.avatar.color, life:22, size:1.5+Math.random() });
+      }
+    }
   }, [phase]);
 
   useEffect(() => {
@@ -309,6 +363,7 @@ export default function ProductorEjecutivo() {
   // ── START ─────────────────────────────────────────────────────────────────
   const startGame = useCallback(() => {
     if (!selectedAvatar) return;
+    sfx.startMusic();
     initState(selectedAvatar);
     setScore(0); setDeadline(100); setCombo(0); setCollected([]);
     setPhase("playing");
@@ -324,7 +379,7 @@ export default function ProductorEjecutivo() {
     // Physics
     p.vy += GRAVITY * dt;
     p.y += p.vy * dt;
-    if (p.y >= GROUND_Y) { p.y = GROUND_Y; p.vy = 0; p.grounded = true; }
+    if (p.y >= GROUND_Y) { p.y = GROUND_Y; p.vy = 0; p.grounded = true; p.jumpsLeft = 1; }
     p.frameTimer += dt;
     if (p.frameTimer > 7) { p.frame = (p.frame + 1) % 4; p.frameTimer = 0; }
     s.speed = BASE_SPEED + s.score / 400;
@@ -362,6 +417,7 @@ export default function ProductorEjecutivo() {
 
     // Collisions
     const endGame = () => {
+      sfx.stopMusic();
       sfx.gameOver();
       const ns = Math.round(s.score);
       const newBest = Math.max(parseInt(localStorage.getItem("pe_best")||"0"), ns);
@@ -422,6 +478,7 @@ export default function ProductorEjecutivo() {
     if (s.deadlineTimer > 88) {
       s.deadline -= 0.5; s.deadlineTimer = 0;
       if (s.deadline <= 0) {
+        sfx.stopMusic();
         const ns = Math.round(s.score);
         const nb = Math.max(parseInt(localStorage.getItem("pe_best")||"0"), ns);
         localStorage.setItem("pe_best", nb);
@@ -501,6 +558,27 @@ export default function ProductorEjecutivo() {
         ctx.strokeStyle=ac+"44"; ctx.lineWidth=0.5; ctx.strokeRect(bx,by,bw,bh);
       });
     });
+
+    // Speed lines
+    const speedFactor = Math.max(0, (s.speed - BASE_SPEED - 0.5) / 6);
+    if (speedFactor > 0) {
+      const t = performance.now() / 1000;
+      ctx.save();
+      for (let i = 0; i < 14; i++) {
+        const ly = 25 + (i * 19.7) % (GROUND_Y - 10);
+        const ll = 30 + (i * 31.7) % 90;
+        const lspd = s.speed * (3 + (i % 3)) * 60;
+        const offset = (t * lspd + i * 211) % (GAME_W + ll + 20);
+        const lx = GAME_W + 10 - offset;
+        if (lx + ll < 0) continue;
+        ctx.globalAlpha = speedFactor * (0.04 + (i % 3) * 0.03);
+        ctx.strokeStyle = ac;
+        ctx.lineWidth = i % 4 === 0 ? 1.5 : 0.8;
+        ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(Math.min(lx + ll, GAME_W), ly); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
 
     // Ground
     ctx.fillStyle="#0c0820"; ctx.fillRect(0,GROUND_Y+48,GAME_W,GAME_H-GROUND_Y-48);
@@ -863,7 +941,7 @@ export default function ProductorEjecutivo() {
                 ▲ SALTAR
               </button>
               <div style={{ color:"#ffffff", fontSize:"clamp(7px,2vw,9px)", letterSpacing:3, textAlign:"center" }}>
-                ESPACIO / TAP PARA SALTAR · ⚠️ BRIEF PARPADEANTE = TRAMPA
+                ESPACIO / TAP · DOBLE SALTO DISPONIBLE · ⚠️ BRIEF PARPADEANTE = TRAMPA
               </div>
             </div>
           )}
