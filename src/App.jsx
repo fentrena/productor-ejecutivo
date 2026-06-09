@@ -288,6 +288,7 @@ export default function ProductorEjecutivo() {
       speed:BASE_SPEED, spawnTimer:50, deadlineTimer:0,
       distanceTick:0, combo:0, score:0, deadline:100,
       popups:[], collected:[], popupId:0, avatar, flashTimer:0,
+      particles:[], shakeTimer:0,
     };
   }, []);
 
@@ -380,13 +381,19 @@ export default function ProductorEjecutivo() {
           sfx.hit();
           s.score = Math.max(0, s.score + o.points);
           s.deadline = Math.max(0, s.deadline - 10);
-          s.combo = 0; s.flashTimer = 12;
+          s.combo = 0; s.flashTimer = 12; s.shakeTimer = 10;
           s.popups.push({ id:o.id, x:o.x, y:o.y-24, text:`💀 ${o.label}`, color:"#FF4444", life:80 });
           if (s.deadline <= 0) endGame();
         } else {
           s.combo++;
           sfx.collect();
           if (s.combo % 3 === 0) sfx.combo();
+          // Particle burst on collect
+          for (let i = 0; i < 12; i++) {
+            const angle = (i / 12) * Math.PI * 2;
+            const speed = 1.5 + Math.random() * 2.5;
+            s.particles.push({ x:o.x, y:o.y, vx:Math.cos(angle)*speed, vy:Math.sin(angle)*speed - 2, color:o.color, life:35, size:2+Math.random()*2 });
+          }
           const mult = av.stat[o.type] || 1;
           const pts = Math.round(o.points * mult * Math.max(1, Math.floor(s.combo/3)));
           s.score += pts;
@@ -401,7 +408,7 @@ export default function ProductorEjecutivo() {
         if (o.comboReset) s.combo = 0;
         s.score = Math.max(0, s.score - (o.pointsDmg||0));
         s.deadline = Math.max(0, s.deadline - (o.deadlineDmg||20));
-        s.flashTimer = 18;
+        s.flashTimer = 18; s.shakeTimer = 16;
         const short = o.label.length > 24 ? o.label.slice(0,22)+"…" : o.label;
         s.popups.push({ id:o.id, x:o.x, y:o.y-28, text:`💥 ${short}`, color:o.color, life:90 });
         if (s.deadline <= 0) endGame();
@@ -425,6 +432,13 @@ export default function ProductorEjecutivo() {
     s.popups.forEach(pop => { pop.y -= 0.65*dt; pop.life -= dt; });
     s.popups = s.popups.filter(x => x.life > 0);
 
+    // Particles
+    s.particles.forEach(p => { p.x += p.vx*dt; p.y += p.vy*dt; p.vy += 0.18*dt; p.life -= dt; });
+    s.particles = s.particles.filter(p => p.life > 0);
+
+    // Shake
+    if (s.shakeTimer > 0) s.shakeTimer -= dt;
+
     s.distanceTick += dt;
     if (s.distanceTick > 10) {
       setScore(Math.round(s.score));
@@ -439,6 +453,12 @@ export default function ProductorEjecutivo() {
     const ctx = canvas.getContext("2d");
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, GAME_W, GAME_H);
+
+    // Screen shake
+    const shake = s.shakeTimer > 0 ? (s.shakeTimer / 16) * 5 : 0;
+    const sx = shake > 0 ? (Math.random() - 0.5) * shake * 2 : 0;
+    const sy = shake > 0 ? (Math.random() - 0.5) * shake * 2 : 0;
+    if (shake > 0) ctx.translate(sx, sy);
 
     // Sky
     const sky = ctx.createLinearGradient(0,0,0,GAME_H);
@@ -526,6 +546,15 @@ export default function ProductorEjecutivo() {
       ctx.shadowBlur=0;
     }
 
+    // Particles
+    s.particles.forEach(part => {
+      ctx.globalAlpha = Math.max(0, part.life / 35) * 0.9;
+      ctx.fillStyle = part.color;
+      ctx.shadowBlur = 4; ctx.shadowColor = part.color;
+      ctx.fillRect(part.x - part.size/2, part.y - part.size/2, part.size, part.size);
+    });
+    ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+
     // Popups
     s.popups.forEach(pop=>{
       ctx.globalAlpha=Math.min(1,pop.life/18);
@@ -535,6 +564,9 @@ export default function ProductorEjecutivo() {
       ctx.shadowBlur=0; ctx.globalAlpha=1;
     });
     ctx.textAlign="left";
+
+    // Reset shake translate
+    if (shake > 0) ctx.translate(-sx, -sy);
   }, []);
 
   useGameLoop(gameLoop, phase === "playing");
