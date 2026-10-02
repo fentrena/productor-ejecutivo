@@ -202,10 +202,43 @@ const JONATHAN_PIXEL = [
   [T,T,"#555","#555",T,T,T,T,"#555","#555"],
 ];
 
+// Frank: director creativo en bicicleta (16x16). Dos frames de rueda (radios verticales / horizontales).
+const _fromMap = (rows, pal) => rows.map(r => [...r].map(ch => pal[ch] || T));
+const _FRANK_PAL = { k:"#111111", s:"#f5c5a3", g:"#FFD700", p:"#FF4D9D", n:"#2a3a7a", f:"#00E5FF", w:"#e8e8e8", x:"#8a8a9a" };
+const _FRANK_TOP = [
+  "................",
+  "......kkkk......",
+  ".....kkkkkk.....",
+  ".....ssssss.....",
+  ".....ssgsgs.....",
+  "......ssss......",
+  ".....pppppp.....",
+  ".....ppppppss...",
+  ".....ppppp.ss...",
+  ".....nnnn...f...",
+  "....knnnnffff...",
+  "..wwwfnn...wfw..",
+];
+const FRANK_PIXEL = _fromMap([
+  ..._FRANK_TOP,
+  ".w.x.wfnn.w.f.w.",
+  ".w.xfwfkkfw.x.w.",
+  ".w.x.w....w.x.w.",
+  "..www......www..",
+], _FRANK_PAL);
+const FRANK_PIXEL_B = _fromMap([
+  ..._FRANK_TOP,
+  ".w...wfnn.w.f.w.",
+  ".wxxfwfkkfwxxxw.",
+  ".w...w....w...w.",
+  "..www......www..",
+], _FRANK_PAL);
+
 const AVATARS = [
   { id:"martins", nombre:"La Martins", rol:"Por mi que se joda",          color:"#C77DFF", pixel:MARTINS_PIXEL, bonus:"✍️ Copy vale 2x", stat:{footage:1,copy:2,approval:1,budget:1,brief:1}, emoji:"💜" },
   { id:"leonzi",  nombre:"Leonzi",     rol:"Yo no tengo peo",             color:"#00FF9C", pixel:LEONZI_PIXEL,  bonus:"💰 Budget vale 2x", stat:{footage:1,copy:1,approval:1,budget:2,brief:1}, emoji:"💚" },
   { id:"jonathan",nombre:"Jonathan",   rol:"Venezuela, lo estamos logrando", color:"#FFD700", pixel:JONATHAN_PIXEL,bonus:"🎬 Footage vale 2x", stat:{footage:2,copy:1,approval:1,budget:1,brief:1}, emoji:"💛" },
+  { id:"frank",   nombre:"Frank",      rol:"Director Creativo · hazlo más pop", color:"#FF4D9D", pixel:FRANK_PIXEL, pixelAlt:FRANK_PIXEL_B, bonus:"✅ Aprobación vale 2x", stat:{footage:1,copy:1,approval:2,budget:1,brief:1}, emoji:"🚲" },
 ];
 
 // ── COLECCIONABLES ─────────────────────────────────────────────────────────────
@@ -620,7 +653,8 @@ export default function ProductorEjecutivo() {
       ctx.fillStyle=`${av.color}20`;
       ctx.beginPath(); ctx.ellipse(p.x,GROUND_Y+52,18,5,0,0,Math.PI*2); ctx.fill();
       ctx.shadowBlur=18; ctx.shadowColor=av.color;
-      drawPixelArt(ctx,av.pixel,Math.round(drawX),Math.round(drawY),PIXEL_SCALE);
+      const sprite=(av.pixelAlt && p.grounded && p.frame%2===1)?av.pixelAlt:av.pixel;
+      drawPixelArt(ctx,sprite,Math.round(drawX),Math.round(drawY),PIXEL_SCALE);
       ctx.shadowBlur=0;
     }
 
@@ -742,7 +776,7 @@ export default function ProductorEjecutivo() {
 
       {/* ── SELECCIÓN ───────────────────────────────────────────── */}
       {phase === "select" && (
-        <div style={{ textAlign:"center", width:"100%", maxWidth:680, padding:"0 8px" }}>
+        <div style={{ textAlign:"center", width:"100%", maxWidth:880, padding:"0 8px" }}>
           <div style={{ fontSize:"clamp(8px,2vw,11px)", letterSpacing:6, color:"#ffffff", marginBottom:4 }}>ELIGE TU JUGADOR</div>
           <div style={{ fontSize:"clamp(16px,5vw,24px)", fontWeight:900, letterSpacing:5, color:"#fff", marginBottom:20 }}>¿QUIÉN ERES HOY?</div>
 
